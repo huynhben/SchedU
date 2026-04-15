@@ -1,15 +1,6 @@
 USE SCHDB;
 
--- Users
-INSERT INTO `User` (name, email, password) VALUES
-('Eunisela Wilson', 'euni@vt.edu', 'pass123'),
-('Ben Huynh', 'ben@vt.edu', 'pass123'),
-('Divyan Dhavale', 'divyan@vt.edu', 'pass123'),
-('Ethan Surber', 'ethan@vt.edu', 'pass123'),
-('Maria Lopez', 'mlopez@vt.edu', 'pass123'),
-('James Park', 'jpark@vt.edu', 'pass123'),
-('John Doe', 'doej@vt.edu', 'apple234'),
-('Jasmine Nguyen', 'jnguygen@vt.edu', '09pass34');
+-- Note: Users are seeded separately via backend/seed-users.js
 
 -- Course
 INSERT INTO Course (courseName, section, semester, startTime, endTime, location) VALUES

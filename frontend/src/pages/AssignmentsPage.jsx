@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { api } from "../api";
 
-const STATUS_OPTIONS = ["pending", "in-progress", "complete"];
-const PRIORITY_OPTIONS = ["low", "medium", "high"];
+const STATUS_OPTIONS = ["Not Started", "In Progress", "Done"];
+const PRIORITY_OPTIONS = ["Low", "Medium", "High"];
 
 export default function AssignmentsPage() {
   const [assignments, setAssignments] = useState([]);
