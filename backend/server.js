@@ -3,6 +3,7 @@ const mysql = require("mysql2");
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "../.env.local") });
+const { authenticateToken, requireAdmin } = require("./middleware/auth");
 
 const app = express();
 app.use(cors());
@@ -20,6 +21,15 @@ const pool = mysql.createPool({
 
 
 const db = pool.promise();
+
+// Auth routes (no middleware)
+app.use("/api/auth", require("./routes/auth")(db));
+
+// User-scoped routes (require valid JWT)
+app.use("/api/my", authenticateToken, require("./routes/my")(db));
+
+// Admin routes (require valid JWT + isAdmin)
+app.use("/api/admin", authenticateToken, requireAdmin, require("./routes/admin")(db));
 
 // Health check
 app.get("/api/status", async (req, res) => {
