@@ -1,1 +1,0 @@
-Ben Huynh: Work on the frontend and backend to ensure database is accurate and working. 
