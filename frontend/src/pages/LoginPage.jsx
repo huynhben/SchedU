@@ -32,6 +32,7 @@ export default function LoginPage() {
 
   return (
     <div style={styles.page}>
+      <style>{`input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #fff inset !important; -webkit-text-fill-color: #1e293b !important; }`}</style>
       <div style={styles.card}>
         <h1 style={styles.title}>SchedU</h1>
         <div style={styles.tabs}>
