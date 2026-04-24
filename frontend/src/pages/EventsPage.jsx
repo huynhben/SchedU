@@ -12,6 +12,8 @@ export default function EventsPage() {
   const [showOrgPanel, setShowOrgPanel] = useState(false);
   const [allOrgs, setAllOrgs] = useState([]);
   const [orgError, setOrgError] = useState("");
+  const [editID, setEditID] = useState(null);
+  const [editVals, setEditVals] = useState({});
 
   useEffect(() => {
     loadEvents();
@@ -45,6 +47,46 @@ export default function EventsPage() {
     } catch (err) {
       setOrgError(err.message);
     }
+  }
+
+  function startEdit(ev) {
+    setEditID(ev.eventID);
+    setEditVals({
+      title:       ev.title || "",
+      description: ev.description || "",
+      location:    ev.location || "",
+      startTime:   ev.startTime ? new Date(ev.startTime).toISOString().slice(0, 16) : "",
+      endTime:     ev.endTime   ? new Date(ev.endTime).toISOString().slice(0, 16)   : "",
+    });
+  }
+
+  async function saveEdit(eventID) {
+    try {
+      await api.put(`/my/events/${eventID}`, editVals);
+      setEditID(null);
+      loadEvents();
+    } catch (err) { setEventError(err.message); }
+  }
+
+  async function deleteEvent(eventID) {
+    if (!window.confirm("Delete this event?")) return;
+    try {
+      await api.del(`/my/events/${eventID}`);
+      loadEvents();
+    } catch (err) { setEventError(err.message); }
+  }
+
+  async function leaveOrg(organizationID) {
+    if (!window.confirm("Leave this organization?")) return;
+    try {
+      await api.del(`/my/memberships/${organizationID}`);
+      const [myOrgs, evts] = await Promise.all([
+        api.get("/my/organizations"),
+        api.get("/my/events"),
+      ]);
+      setOrgs(myOrgs || []);
+      setEvents(evts || []);
+    } catch (err) { setOrgError(err.message); }
   }
 
   async function createEvent(e) {
@@ -140,14 +182,34 @@ export default function EventsPage() {
         {events.length === 0 && orgs.length > 0 && <p style={styles.empty}>No events from your organizations.</p>}
         {events.map(ev => (
           <div key={ev.eventID} style={styles.card}>
-            <div style={styles.cardHeader}>
-              <strong style={{ fontSize: 15 }}>{ev.title}</strong>
-              <span style={styles.orgTag}>{ev.organizationName}</span>
-            </div>
-            <div style={styles.metaText}>
-              {[formatDateTime(ev.startTime), ev.location].filter(Boolean).join(" · ")}
-            </div>
-            {ev.description && <div style={styles.desc}>{ev.description}</div>}
+            {editID === ev.eventID ? (
+              <div style={styles.editForm}>
+                <input value={editVals.title} onChange={e => setEditVals(v => ({ ...v, title: e.target.value }))} placeholder="Title" style={styles.input} />
+                <input value={editVals.location} onChange={e => setEditVals(v => ({ ...v, location: e.target.value }))} placeholder="Location" style={styles.input} />
+                <input value={editVals.description} onChange={e => setEditVals(v => ({ ...v, description: e.target.value }))} placeholder="Description" style={styles.input} />
+                <label style={styles.dateLabel}>Start<input type="datetime-local" value={editVals.startTime} onChange={e => setEditVals(v => ({ ...v, startTime: e.target.value }))} style={styles.input} /></label>
+                <label style={styles.dateLabel}>End<input type="datetime-local" value={editVals.endTime} onChange={e => setEditVals(v => ({ ...v, endTime: e.target.value }))} style={styles.input} /></label>
+                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  <button onClick={() => saveEdit(ev.eventID)} style={styles.btn}>Save</button>
+                  <button onClick={() => setEditID(null)} style={styles.btnSecondary}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div style={styles.cardHeader}>
+                  <strong style={{ fontSize: 15 }}>{ev.title}</strong>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={styles.orgTag}>{ev.organizationName}</span>
+                    <button onClick={() => startEdit(ev)} style={styles.btnSecondary}>Edit</button>
+                    <button onClick={() => deleteEvent(ev.eventID)} style={styles.leaveBtn}>Delete</button>
+                  </div>
+                </div>
+                <div style={styles.metaText}>
+                  {[formatDateTime(ev.startTime), ev.location].filter(Boolean).join(" · ")}
+                </div>
+                {ev.description && <div style={styles.desc}>{ev.description}</div>}
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -177,4 +239,6 @@ const styles = {
   btnSecondary:{ padding: "6px 12px", background: "none", color: "#2563eb", border: "1px solid #2563eb", borderRadius: 6, cursor: "pointer", fontSize: 13, fontFamily: "system-ui, sans-serif" },
   error:       { color: "#dc2626", fontSize: 13, margin: 0 },
   empty:       { color: "#94a3b8", fontSize: 14, margin: 0 },
+  leaveBtn:    { padding: "3px 10px", background: "none", color: "#dc2626", border: "1px solid #dc2626", borderRadius: 6, cursor: "pointer", fontSize: 12, fontFamily: "system-ui, sans-serif" },
+  editForm:    { display: "flex", flexDirection: "column", gap: 8 },
 };

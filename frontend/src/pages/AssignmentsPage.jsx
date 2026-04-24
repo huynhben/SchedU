@@ -114,6 +114,14 @@ export default function AssignmentsPage() {
     } catch (err) { setError(err.message); }
   }
 
+  async function deleteAssignment(id) {
+    if (!window.confirm("Delete this assignment?")) return;
+    try {
+      await api.del(`/my/assignments/${id}`);
+      load();
+    } catch (err) { setError(err.message); }
+  }
+
   async function addAssignment(e) {
     e.preventDefault();
     setError("");
@@ -239,7 +247,10 @@ export default function AssignmentsPage() {
                           <button onClick={() => saveEdit(a.assignmentID)} style={{ ...s.btn, marginRight: 6 }}>Save</button>
                           <button onClick={() => setEditID(null)} style={s.btnSecondary}>Cancel</button>
                         </>
-                      : <button onClick={() => startEdit(a)} style={s.btnSecondary}>Edit</button>}
+                      : <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => startEdit(a)} style={s.btnSecondary}>Edit</button>
+                          <button onClick={() => deleteAssignment(a.assignmentID)} style={s.deleteBtn}>Delete</button>
+                        </div>}
                   </td>
                 </tr>
               );
@@ -270,5 +281,6 @@ const s = {
   select:      { padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "system-ui, sans-serif" },
   input:       { padding: "8px 10px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "system-ui, sans-serif" },
   form:        { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", background: "#fff", padding: 16, borderRadius: 8, marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.07)" },
+  deleteBtn:   { padding: "6px 12px", background: "none", color: "#dc2626", border: "1px solid #dc2626", borderRadius: 6, cursor: "pointer", fontSize: 13, fontFamily: "system-ui, sans-serif" },
   error:       { color: "#dc2626", fontSize: 13 },
 };

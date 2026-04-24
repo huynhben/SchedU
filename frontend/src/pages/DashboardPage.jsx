@@ -76,6 +76,24 @@ export default function DashboardPage() {
     } catch (err) { setCourseError(err.message); }
   }
 
+  async function leaveOrg(organizationID) {
+    if (!window.confirm("Leave this organization?")) return;
+    try {
+      await api.del(`/my/memberships/${organizationID}`);
+      const orgs = await api.get("/my/organizations");
+      setOrganizations(orgs || []);
+    } catch (err) { setCourseError(err.message); }
+  }
+
+  async function unenroll(courseID) {
+    if (!window.confirm("Unenroll from this course?")) return;
+    try {
+      await api.del(`/my/enrollments/${courseID}`);
+      const enrolled = await api.get("/my/courses");
+      setCourses(enrolled || []);
+    } catch (err) { setCourseError(err.message); }
+  }
+
   async function createCourse(e) {
     e.preventDefault();
     setCourseError("");
@@ -199,9 +217,14 @@ export default function DashboardPage() {
           {courses.length === 0 && <p style={st.empty}>No courses enrolled.</p>}
           {courses.map(c => (
             <div key={c.courseID} style={st.courseItem}>
-              <strong>{c.courseName}</strong>{c.section ? ` §${c.section}` : ""}
-              <div style={st.meta}>
-                {[c.days, c.startTime && c.endTime ? `${c.startTime}–${c.endTime}` : null, c.location].filter(Boolean).join(" · ")}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <strong>{c.courseName}</strong>{c.section ? ` §${c.section}` : ""}
+                  <div style={st.meta}>
+                    {[c.days, c.startTime && c.endTime ? `${c.startTime}–${c.endTime}` : null, c.location].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                <button onClick={() => unenroll(c.courseID)} style={st.deleteBtn}>Unenroll</button>
               </div>
             </div>
           ))}
@@ -256,6 +279,7 @@ export default function DashboardPage() {
             <div key={o.organizationID} style={st.orgItem}>
               <strong>{o.organizationName}</strong>
               {o.role && <span style={st.roleTag}>{o.role}</span>}
+              <button onClick={() => leaveOrg(o.organizationID)} style={{ ...st.deleteBtn, marginLeft: "auto" }}>Leave</button>
               {o.description && <div style={{ ...st.meta, width: "100%" }}>{o.description}</div>}
             </div>
           ))}
@@ -300,5 +324,6 @@ const st = {
   createForm:   { display: "flex", flexDirection: "column", gap: 8 },
   formRow:      { display: "flex", gap: 8 },
   input:        { padding: "8px 10px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "system-ui, sans-serif", background: "#fff", color: "#1e293b", flex: 1 },
+  deleteBtn:    { padding: "3px 10px", background: "none", color: "#dc2626", border: "1px solid #dc2626", borderRadius: 6, cursor: "pointer", fontSize: 12, fontFamily: "system-ui, sans-serif", flexShrink: 0 },
   error:        { color: "#dc2626", fontSize: 13, margin: "4px 0" },
 };

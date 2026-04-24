@@ -273,6 +273,87 @@ module.exports = (db) => {
     }
   });
 
+  // PUT /api/my/events/:id
+  router.put("/events/:id", async (req, res) => {
+    const { userID } = req.user;
+    const { title, description, startTime, endTime, location } = req.body;
+    try {
+      const [result] = await db.query(
+        "UPDATE `Event` SET title = ?, description = ?, startTime = ?, endTime = ?, location = ? WHERE eventID = ? AND userID = ?",
+        [title, description || null, startTime || null, endTime || null, location || null, req.params.id, userID]
+      );
+      if (result.affectedRows === 0)
+        return res.status(404).json({ error: "Event not found or not yours." });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // DELETE /api/my/events/:id
+  router.delete("/events/:id", async (req, res) => {
+    const { userID } = req.user;
+    try {
+      const [result] = await db.query(
+        "DELETE FROM `Event` WHERE eventID = ? AND userID = ?",
+        [req.params.id, userID]
+      );
+      if (result.affectedRows === 0)
+        return res.status(404).json({ error: "Event not found or not yours." });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // DELETE /api/my/assignments/:id
+  router.delete("/assignments/:id", async (req, res) => {
+    const { userID } = req.user;
+    try {
+      const [result] = await db.query(
+        "DELETE FROM Assignment WHERE assignmentID = ? AND userID = ?",
+        [req.params.id, userID]
+      );
+      if (result.affectedRows === 0)
+        return res.status(404).json({ error: "Assignment not found or not yours." });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // DELETE /api/my/enrollments/:courseID
+  router.delete("/enrollments/:courseID", async (req, res) => {
+    const { userID } = req.user;
+    try {
+      const [result] = await db.query(
+        "DELETE FROM Enrollment WHERE userID = ? AND courseID = ?",
+        [userID, req.params.courseID]
+      );
+      if (result.affectedRows === 0)
+        return res.status(404).json({ error: "Enrollment not found." });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // DELETE /api/my/memberships/:organizationID
+  router.delete("/memberships/:organizationID", async (req, res) => {
+    const { userID } = req.user;
+    try {
+      const [result] = await db.query(
+        "DELETE FROM OrganizationMembership WHERE userID = ? AND organizationID = ?",
+        [userID, req.params.organizationID]
+      );
+      if (result.affectedRows === 0)
+        return res.status(404).json({ error: "Membership not found." });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // GET /api/my/all-courses — all courses with enrolled flag for this user
   router.get("/all-courses", async (req, res) => {
     const { userID } = req.user;
