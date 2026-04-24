@@ -9,6 +9,8 @@ import DashboardPage from './pages/DashboardPage'
 import AssignmentsPage from './pages/AssignmentsPage'
 import EventsPage from './pages/EventsPage'
 import AdminPage from './pages/AdminPage'
+import CalendarPage from './pages/CalendarPage'
+import AnalyticsPage from './pages/AnalyticsPage'
 import './index.css'
 
 createRoot(document.getElementById('root')).render(
@@ -26,6 +28,12 @@ createRoot(document.getElementById('root')).render(
           } />
           <Route path="/events" element={
             <ProtectedRoute><EventsPage /></ProtectedRoute>
+          } />
+          <Route path="/calendar" element={
+            <ProtectedRoute><CalendarPage /></ProtectedRoute>
+          } />
+          <Route path="/analytics" element={
+            <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
           } />
           <Route path="/admin" element={
             <ProtectedRoute adminOnly={true}><AdminPage /></ProtectedRoute>

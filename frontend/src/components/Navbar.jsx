@@ -18,6 +18,8 @@ export default function Navbar() {
           <Link to="/dashboard" style={styles.link}>Dashboard</Link>
           <Link to="/assignments" style={styles.link}>Assignments</Link>
           <Link to="/events" style={styles.link}>Events</Link>
+          <Link to="/calendar" style={styles.link}>Calendar</Link>
+          <Link to="/analytics" style={styles.link}>Analytics</Link>
           {user.isAdmin === 1 && (
             <Link to="/admin" style={styles.link}>Admin</Link>
           )}

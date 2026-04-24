@@ -14,7 +14,7 @@ async function apiFetch(path, options = {}) {
       ...options.headers,
     },
   });
-  if (res.status === 401 || res.status === 403) {
+  if ((res.status === 401 || res.status === 403) && getToken()) {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     window.location.href = "/";

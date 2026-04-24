@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS Assignment (
   priority VARCHAR(20),
   grade VARCHAR(5),
   status VARCHAR(20),
+  dueDate DATE,
   FOREIGN KEY (courseID) REFERENCES Course(courseID) ON DELETE CASCADE,
   FOREIGN KEY (userID) REFERENCES `User`(userID) ON DELETE CASCADE
 );
