@@ -1,1 +1,1 @@
-Ben Huynh: Work on the frontend and backend to ensure database is accurate and working. 
+Ben Huynh: Work on the frontend and backend to ensure database is accurate and working. Worked on the dashboard, calendar, analytics tab. Made sure data presented in the front-end reflected within the database and updated with the backend.

@@ -1,7 +1,3 @@
-
-Run this in mySQL, added the dueDate attribute to track time on assignments
-ALTER TABLE Assignment ADD COLUMN dueDate DATE;
-
 === Setup Instructions ===
 
 1. Pull the repo
