@@ -136,7 +136,19 @@ export default function AssignmentsPage() {
     } catch (err) { setError(err.message); }
   }
 
-  const visible = filter ? assignments.filter(a => a.status === filter) : assignments;
+  const visible = (filter ? assignments.filter(a => a.status === filter) : assignments)
+    .slice()
+    .sort((a, b) => {
+      const doneA = a.status === "Done" ? 1 : 0;
+      const doneB = b.status === "Done" ? 1 : 0;
+      if (doneA !== doneB) return doneA - doneB;
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return doneA
+        ? new Date(b.dueDate) - new Date(a.dueDate)
+        : new Date(a.dueDate) - new Date(b.dueDate);
+    });
 
   return (
     <div style={s.page}>
@@ -206,9 +218,11 @@ export default function AssignmentsPage() {
                   <td style={s.td}>
                     {editID === a.assignmentID
                       ? <input type="date" value={editVals.dueDate} onChange={e => setEditVals(v => ({ ...v, dueDate: e.target.value }))} style={{ ...s.select, width: 130 }} />
-                      : dueLabel
-                        ? <span style={{ color: dueLabel.color, fontWeight: 500, fontSize: 13 }}>{dueLabel.text}</span>
-                        : <span style={{ color: "#cbd5e1" }}>—</span>}
+                      : a.status === "Done"
+                        ? <span style={{ color: "#16a34a", fontWeight: 500, fontSize: 13 }}>Completed</span>
+                        : dueLabel
+                          ? <span style={{ color: dueLabel.color, fontWeight: 500, fontSize: 13 }}>{dueLabel.text}</span>
+                          : <span style={{ color: "#cbd5e1" }}>—</span>}
                   </td>
                   <td style={s.td}>
                     {editID === a.assignmentID

@@ -163,50 +163,8 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Row 2: Upcoming Assignments + Notifications */}
+      {/* Row 2: My Courses + My Organizations */}
       <div style={st.grid}>
-        <section style={st.card}>
-          <h3 style={st.sectionTitle}>Upcoming Assignments</h3>
-          {upcomingAssignments.length === 0 && <p style={st.empty}>No upcoming assignments.</p>}
-          {upcomingAssignments.map(a => {
-            const label = dueDateLabel(a.dueDate);
-            return (
-              <div key={a.assignmentID} style={st.assignItem}>
-                <div style={st.assignLeft}>
-                  <div style={st.assignTitle}>{a.title}</div>
-                  <div style={st.meta}>{a.courseName} · {a.priority || "No priority"} · {a.status}</div>
-                </div>
-                {label && <span style={{ ...st.dueTag, color: label.color }}>{label.text}</span>}
-              </div>
-            );
-          })}
-        </section>
-
-        <section style={st.card}>
-          <h3 style={st.sectionTitle}>Notifications</h3>
-          {smartNotifs.length === 0 && notifications.length === 0 && (
-            <p style={st.empty}>No notifications.</p>
-          )}
-          {smartNotifs.map((n, i) => (
-            <div key={i} style={st.notifItem}>
-              <span style={{ ...st.notifType, ...urgencyStyle(n.urgency) }}>{n.type}</span>
-              <span style={{ fontSize: 14 }}>{n.message}</span>
-            </div>
-          ))}
-          {notifications.length > 0 && (
-            <>
-              {smartNotifs.length > 0 && <div style={st.divider} />}
-              {notifications.map(n => (
-                <div key={n.notificationID} style={st.notifItem}>
-                  {n.type && <span style={st.notifType}>{n.type}</span>}
-                  <span style={{ fontSize: 14 }}>{n.message}</span>
-                </div>
-              ))}
-            </>
-          )}
-        </section>
-
-        {/* Row 3: My Courses + My Organizations */}
         <section style={st.card}>
           <div style={st.cardHeader}>
             <h3 style={st.sectionTitle}>My Courses</h3>
@@ -283,6 +241,50 @@ export default function DashboardPage() {
               {o.description && <div style={{ ...st.meta, width: "100%" }}>{o.description}</div>}
             </div>
           ))}
+        </section>
+      </div>
+
+      {/* Row 3: Upcoming Assignments + Notifications */}
+      <div style={{ ...st.grid, marginTop: 24 }}>
+        <section style={st.card}>
+          <h3 style={st.sectionTitle}>Upcoming Assignments</h3>
+          {upcomingAssignments.length === 0 && <p style={st.empty}>No upcoming assignments.</p>}
+          {upcomingAssignments.map(a => {
+            const label = dueDateLabel(a.dueDate);
+            return (
+              <div key={a.assignmentID} style={st.assignItem}>
+                <div style={st.assignLeft}>
+                  <div style={st.assignTitle}>{a.title}</div>
+                  <div style={st.meta}>{a.courseName} · {a.priority || "No priority"} · {a.status}</div>
+                </div>
+                {label && <span style={{ ...st.dueTag, color: label.color }}>{label.text}</span>}
+              </div>
+            );
+          })}
+        </section>
+
+        <section style={st.card}>
+          <h3 style={st.sectionTitle}>Notifications</h3>
+          {smartNotifs.length === 0 && notifications.length === 0 && (
+            <p style={st.empty}>No notifications.</p>
+          )}
+          {smartNotifs.map((n, i) => (
+            <div key={i} style={st.notifItem}>
+              <span style={{ ...st.notifType, ...urgencyStyle(n.urgency) }}>{n.type}</span>
+              <span style={{ fontSize: 14 }}>{n.message}</span>
+            </div>
+          ))}
+          {notifications.length > 0 && (
+            <>
+              {smartNotifs.length > 0 && <div style={st.divider} />}
+              {notifications.map(n => (
+                <div key={n.notificationID} style={st.notifItem}>
+                  {n.type && <span style={st.notifType}>{n.type}</span>}
+                  <span style={{ fontSize: 14 }}>{n.message}</span>
+                </div>
+              ))}
+            </>
+          )}
         </section>
       </div>
     </div>

@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { api } from "../api";
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAY_MAP = { Monday: 0, Tuesday: 1, Wednesday: 2, Thursday: 3, Friday: 4, Saturday: 5, Sunday: 6 };
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_MAP = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
 
 function getWeekStart(date) {
   const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
+  d.setDate(d.getDate() - d.getDay()); // roll back to Sunday
   d.setHours(0, 0, 0, 0);
   return d;
 }
@@ -82,11 +80,10 @@ export default function AnalyticsPage() {
   }
 
   function coursesForDay(day) {
-    const dow = day.getDay(); // 0=Sun
-    const mapped = dow === 0 ? 6 : dow - 1; // convert to Mon=0
+    const dow = day.getDay(); // 0=Sun, matches DAY_MAP (Sunday: 0)
     return courses.filter(c => {
       if (!c.days) return false;
-      return c.days.split(", ").map(d => DAY_MAP[d.trim()]).includes(mapped);
+      return c.days.split(", ").map(d => DAY_MAP[d.trim()]).includes(dow);
     });
   }
 
@@ -138,11 +135,10 @@ export default function AnalyticsPage() {
             {fmtDate(weekStart)} – {fmtDate(weekEnd)}
           </span>
           <button onClick={nextWeek} style={s.navBtn}>›</button>
-          {!isThisWeek && (
-            <button onClick={() => setWeekStart(getWeekStart(new Date()))} style={s.todayBtn}>
-              This Week
-            </button>
-          )}
+          {isThisWeek
+            ? <span style={{ ...s.todayBtn, cursor: "default" }}>This Week</span>
+            : <button onClick={() => setWeekStart(getWeekStart(new Date()))} style={s.todayBtn}>← Today</button>
+          }
         </div>
         <h2 style={s.title}>Weekly Workload</h2>
       </div>
@@ -198,22 +194,24 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Day breakdown */}
+      {/* Day breakdown — all 7 days always rendered to preserve Mon–Sun order */}
       <div style={s.breakdown}>
         {days.map((day, i) => {
           const dc = coursesForDay(day);
           const da = assignmentsForDay(day);
           const de = eventsForDay(day);
+          const isEmpty = dc.length === 0 && da.length === 0 && de.length === 0;
           const isToday = sameDay(day, today);
-          if (dc.length === 0 && da.length === 0 && de.length === 0) return null;
           return (
-            <div key={i} style={{ ...s.dayCard, ...(isToday ? s.todayCard : {}) }}>
+            <div key={i} style={{ ...s.dayCard, ...(isToday ? s.todayCard : {}), ...(isEmpty ? s.emptyDayCard : {}) }}>
               <div style={s.dayCardHeader}>
-                <span style={{ ...s.dayCardTitle, ...(isToday ? { color: "#2563eb" } : {}) }}>
+                <span style={{ ...s.dayCardTitle, ...(isToday ? { color: "#2563eb" } : {}), ...(isEmpty ? { color: "#94a3b8" } : {}) }}>
                   {DAY_LABELS[i]} <span style={s.dayCardDate}>{fmtDate(day)}</span>
                 </span>
                 {dayMins[i] > 0 && <span style={s.dayCardMins}>{fmtMins(dayMins[i])} estimated</span>}
               </div>
+
+              {isEmpty && <div style={{ fontSize: 12, color: "#cbd5e1" }}>Nothing scheduled</div>}
 
               {dc.length > 0 && (
                 <div style={s.daySection}>
@@ -255,9 +253,92 @@ export default function AnalyticsPage() {
             </div>
           );
         })}
-        {days.every((day, i) => coursesForDay(day).length === 0 && assignmentsForDay(day).length === 0 && eventsForDay(day).length === 0) && (
-          <p style={{ color: "#94a3b8", fontSize: 14 }}>Nothing scheduled this week.</p>
-        )}
+      </div>
+
+      {/* Assignment Overview */}
+      <AssignmentOverview assignments={assignments} />
+    </div>
+  );
+}
+
+const GRADE_ORDER = ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"];
+const GRADE_COLORS = { A: "#16a34a", "A-": "#22c55e", "B+": "#65a30d", B: "#84cc16", "B-": "#a3e635", "C+": "#eab308", C: "#f59e0b", "C-": "#f97316", "D+": "#ef4444", D: "#dc2626", "D-": "#b91c1c", F: "#7f1d1d" };
+
+function AssignmentOverview({ assignments }) {
+  const total = assignments.length;
+  if (total === 0) return null;
+
+  const done       = assignments.filter(a => a.status === "Done").length;
+  const inProgress = assignments.filter(a => a.status === "In Progress").length;
+  const notStarted = assignments.filter(a => a.status === "Not Started").length;
+
+  const graded = assignments.filter(a => a.grade);
+  const gradeCounts = {};
+  for (const a of graded) gradeCounts[a.grade] = (gradeCounts[a.grade] || 0) + 1;
+  const gradeMax = Math.max(...Object.values(gradeCounts), 1);
+
+  const highPri   = assignments.filter(a => a.priority === "High" && a.status !== "Done").length;
+  const medPri    = assignments.filter(a => a.priority === "Medium" && a.status !== "Done").length;
+  const lowPri    = assignments.filter(a => a.priority === "Low" && a.status !== "Done").length;
+
+  return (
+    <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+
+      {/* Status breakdown */}
+      <div style={s.chartCard}>
+        <div style={s.chartTitle}>Assignment Status</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {[
+            { label: "Done",         count: done,       color: "#16a34a", bg: "#dcfce7" },
+            { label: "In Progress",  count: inProgress, color: "#2563eb", bg: "#dbeafe" },
+            { label: "Not Started",  count: notStarted, color: "#94a3b8", bg: "#f1f5f9" },
+          ].map(({ label, count, color, bg }) => (
+            <div key={label}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>{label}</span>
+                <span style={{ fontSize: 13, color }}>{count} / {total}</span>
+              </div>
+              <div style={{ height: 10, background: "#f1f5f9", borderRadius: 6, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${total > 0 ? Math.round((count / total) * 100) : 0}%`, background: color, borderRadius: 6, transition: "width 0.4s ease" }} />
+              </div>
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+            <div style={{ flex: 1, background: "#f0fdf4", borderRadius: 8, padding: "12px 16px", textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#16a34a" }}>{total > 0 ? Math.round((done / total) * 100) : 0}%</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Complete</div>
+            </div>
+            <div style={{ flex: 1, background: "#fff7ed", borderRadius: 8, padding: "12px 16px", textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#ea580c" }}>{highPri}</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>High priority pending</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grade distribution */}
+      <div style={s.chartCard}>
+        <div style={s.chartTitle}>Grade Distribution ({graded.length} graded)</div>
+        {graded.length === 0
+          ? <p style={{ color: "#94a3b8", fontSize: 14 }}>No graded assignments yet.</p>
+          : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {GRADE_ORDER.filter(g => gradeCounts[g]).map(g => {
+                const count = gradeCounts[g];
+                const pct = Math.round((count / gradeMax) * 100);
+                return (
+                  <div key={g} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, fontSize: 13, fontWeight: 700, color: GRADE_COLORS[g], flexShrink: 0 }}>{g}</div>
+                    <div style={{ flex: 1, height: 20, background: "#f1f5f9", borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${Math.max(pct, count > 0 ? 4 : 0)}%`, background: GRADE_COLORS[g], borderRadius: 4, transition: "width 0.4s ease" }} />
+                    </div>
+                    <div style={{ width: 20, fontSize: 13, color: "#64748b", textAlign: "right", flexShrink: 0 }}>{count}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        }
       </div>
     </div>
   );
@@ -290,6 +371,7 @@ const s = {
   breakdown:     { display: "flex", flexDirection: "column", gap: 12 },
   dayCard:       { background: "#fff", borderRadius: 8, padding: "16px 20px", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" },
   todayCard:     { borderLeft: "3px solid #2563eb" },
+  emptyDayCard:  { opacity: 0.5 },
   dayCardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   dayCardTitle:  { fontSize: 15, fontWeight: 700, color: "#1e293b" },
   dayCardDate:   { fontWeight: 400, color: "#94a3b8", fontSize: 13 },
